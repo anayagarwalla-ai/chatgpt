@@ -8,18 +8,40 @@ import {
   getTagOptions
 } from './lib/recommendations.js';
 
+const GOAL_IMPACT_KG = 30;
+
+const initialCommitments = [
+  {
+    id: 'seed-plant-rich',
+    text: 'Plan three plant-rich dinners for the week and prep ingredients on Sunday night.',
+    impactKg: 6,
+    sourceAction: 'Plan three plant-rich meals this week',
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
+    completed: false
+  },
+  {
+    id: 'seed-led-upgrade',
+    text: 'Replace the hallway bulbs with LEDs before recycling day.',
+    impactKg: 7,
+    sourceAction: 'Swap household bulbs for LEDs',
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 30).toISOString(),
+    completed: true
+  }
+];
+
 const state = {
   footprint: 24,
   focus: 'all',
   effort: 'all',
   time: 'all',
   tags: [],
-  commitments: []
+  commitments: [...initialCommitments]
 };
 
 let fadeObserver;
 
 const selectors = {
+  heroActionsButton: document.getElementById('scroll-actions'),
   footprintRange: document.getElementById('footprint-range'),
   footprintValue: document.getElementById('footprint-value'),
   focusSelect: document.getElementById('focus-select'),
@@ -34,7 +56,10 @@ const selectors = {
   commitmentSelect: document.getElementById('commitment-action'),
   commitmentList: document.getElementById('commitment-list'),
   commitmentCount: document.getElementById('commitment-count'),
-  impactTotal: document.getElementById('impact-total')
+  completedCount: document.getElementById('completed-count'),
+  impactTotal: document.getElementById('impact-total'),
+  commitmentProgress: document.getElementById('commitment-progress'),
+  progressLabel: document.getElementById('progress-label')
 };
 
 function setupPlanner() {
@@ -75,6 +100,18 @@ function renderInsights() {
   if (focusInsight) {
     focusInsight.textContent = buildFocusMessage(state.focus, actions);
   }
+}
+
+function setupHero() {
+  const { heroActionsButton } = selectors;
+  if (!heroActionsButton) return;
+
+  heroActionsButton.addEventListener('click', () => {
+    const actionsSection = document.getElementById('actions');
+    if (actionsSection) {
+      actionsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
 }
 
 function setupFilters() {
@@ -213,7 +250,8 @@ function addActionCommitment(actionId) {
     text: `I will ${action.title.toLowerCase()}.`,
     impactKg: action.impactKg,
     sourceAction: action.title,
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
+    completed: false
   };
 
   state.commitments = [commitment, ...state.commitments];
@@ -221,8 +259,15 @@ function addActionCommitment(actionId) {
 }
 
 function setupCommitments() {
-  const { commitmentForm, commitmentInput, commitmentSelect } = selectors;
-  if (!commitmentForm || !commitmentInput || !commitmentSelect) return;
+  const {
+    commitmentForm,
+    commitmentInput,
+    commitmentSelect,
+    commitmentList
+  } = selectors;
+  if (!commitmentForm || !commitmentInput || !commitmentSelect || !commitmentList) {
+    return;
+  }
 
   populateCommitmentSelect();
 
@@ -245,13 +290,34 @@ function setupCommitments() {
       text,
       impactKg: matchedAction?.impactKg ?? defaultImpact?.impactKg ?? 0,
       sourceAction: matchedAction?.title ?? defaultImpact?.title ?? 'Custom plan',
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      completed: false
     };
 
     state.commitments = [commitment, ...state.commitments];
     commitmentForm.reset();
     populateCommitmentSelect();
     renderCommitments();
+  });
+
+  commitmentList.addEventListener('change', (event) => {
+    const target = event.target;
+    if (target instanceof HTMLInputElement && target.classList.contains('commitment-checkbox')) {
+      const { commitmentId } = target.dataset;
+      if (commitmentId) {
+        toggleCommitmentCompletion(commitmentId, target.checked);
+      }
+    }
+  });
+
+  commitmentList.addEventListener('click', (event) => {
+    const button = event.target instanceof HTMLElement ? event.target.closest('.commitment-remove') : null;
+    if (button instanceof HTMLButtonElement) {
+      const { commitmentId } = button.dataset;
+      if (commitmentId) {
+        removeCommitment(commitmentId);
+      }
+    }
   });
 }
 
@@ -270,8 +336,20 @@ function populateCommitmentSelect() {
   });
 }
 
+function toggleCommitmentCompletion(commitmentId, completed) {
+  state.commitments = state.commitments.map((commitment) =>
+    commitment.id === commitmentId ? { ...commitment, completed } : commitment
+  );
+  renderCommitments();
+}
+
+function removeCommitment(commitmentId) {
+  state.commitments = state.commitments.filter((commitment) => commitment.id !== commitmentId);
+  renderCommitments();
+}
+
 function renderCommitments() {
-  const { commitmentList, commitmentCount, impactTotal } = selectors;
+  const { commitmentList } = selectors;
   if (!commitmentList) return;
 
   commitmentList.innerHTML = '';
@@ -284,7 +362,7 @@ function renderCommitments() {
   } else {
     state.commitments.forEach((commitment) => {
       const item = document.createElement('li');
-      item.className = 'commitment-item fade-in';
+      item.className = `commitment-item fade-in${commitment.completed ? ' completed' : ''}`;
 
       const text = document.createElement('p');
       text.textContent = commitment.text;
@@ -297,49 +375,127 @@ function renderCommitments() {
         <span>${formatImpact(commitment.impactKg)} • ${timestamp}</span>
       `;
 
-      item.append(text, meta);
+      const actionsRow = document.createElement('div');
+      actionsRow.className = 'commitment-actions';
+
+      const toggleLabel = document.createElement('label');
+      toggleLabel.className = 'commitment-toggle';
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.className = 'commitment-checkbox';
+      checkbox.dataset.commitmentId = commitment.id;
+      checkbox.checked = Boolean(commitment.completed);
+      const toggleText = document.createElement('span');
+      toggleText.textContent = commitment.completed ? 'Completed' : 'Mark complete';
+      toggleLabel.append(checkbox, toggleText);
+
+      const removeButton = document.createElement('button');
+      removeButton.type = 'button';
+      removeButton.className = 'commitment-remove';
+      removeButton.dataset.commitmentId = commitment.id;
+      removeButton.textContent = 'Remove';
+
+      actionsRow.append(toggleLabel, removeButton);
+
+      item.append(text, meta, actionsRow);
       commitmentList.appendChild(item);
     });
   }
 
+  updateCommitmentStats();
+
+  observeFadeIns();
+}
+
+function updateCommitmentStats() {
+  const {
+    commitmentCount,
+    completedCount,
+    impactTotal,
+    commitmentProgress,
+    progressLabel
+  } = selectors;
+
+  const totalCommitments = state.commitments.length;
+  const completed = state.commitments.filter((item) => item.completed).length;
+  const totalImpact = estimateCommitmentImpact(state.commitments);
+  const remainingImpact = Math.max(0, GOAL_IMPACT_KG - totalImpact);
+  const progressValue = Math.min(totalImpact, GOAL_IMPACT_KG);
+  const progressPercent = GOAL_IMPACT_KG
+    ? Math.round((progressValue / GOAL_IMPACT_KG) * 100)
+    : 0;
+
   if (commitmentCount) {
-    commitmentCount.textContent = state.commitments.length.toString();
+    commitmentCount.textContent = totalCommitments.toString();
+  }
+
+  if (completedCount) {
+    completedCount.textContent = completed.toString();
   }
 
   if (impactTotal) {
-    const totalImpact = estimateCommitmentImpact(state.commitments);
     impactTotal.textContent = formatImpact(totalImpact);
   }
 
-  observeFadeIns();
+  if (commitmentProgress) {
+    commitmentProgress.value = progressValue;
+    commitmentProgress.textContent = `${progressPercent}%`;
+  }
+
+  if (progressLabel) {
+    let message = "You're just getting started—log your first win!";
+    if (totalCommitments === 0) {
+      message = "You're just getting started—log your first win!";
+    } else if (remainingImpact <= 0) {
+      message = 'Goal met! Celebrate and invite a friend to join.';
+    } else if (completed === 0) {
+      message = `Add your first completion to unlock momentum. Only ${formatImpact(
+        remainingImpact
+      )} to reach this week's goal.`;
+    } else {
+      message = `Only ${formatImpact(remainingImpact)} to reach this week's goal. Keep going!`;
+    }
+    progressLabel.textContent = message;
+  }
 }
 
 function setupAnimations() {
-  fadeObserver = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-          fadeObserver.unobserve(entry.target);
-        }
-      });
-    },
-    {
-      threshold: 0.2
-    }
-  );
+  if ('IntersectionObserver' in window) {
+    fadeObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            fadeObserver.unobserve(entry.target);
+          }
+        });
+      },
+      {
+        threshold: 0.2
+      }
+    );
 
-  observeFadeIns();
+    observeFadeIns();
+  } else {
+    document.querySelectorAll('.fade-in').forEach((element) => {
+      element.classList.add('visible');
+    });
+  }
 }
 
 function observeFadeIns() {
-  if (!fadeObserver) return;
-  document.querySelectorAll('.fade-in:not(.visible)').forEach((element) => {
-    fadeObserver.observe(element);
-  });
+  const elements = document.querySelectorAll('.fade-in:not(.visible)');
+  if (fadeObserver) {
+    elements.forEach((element) => {
+      fadeObserver.observe(element);
+    });
+  } else {
+    elements.forEach((element) => element.classList.add('visible'));
+  }
 }
 
 function init() {
+  setupHero();
   setupPlanner();
   setupFilters();
   renderActions();

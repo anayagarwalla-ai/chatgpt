@@ -13,6 +13,13 @@
     />
   </head>
   <body>
+    <noscript>
+      <div class="noscript">
+        Climate Companion uses a little JavaScript to personalize your plan. Please
+        enable JavaScript to explore the planner and action library.
+      </div>
+    </noscript>
+
     <header class="app-header">
       <div class="branding">
         <div class="logo">🌍</div>
@@ -21,7 +28,8 @@
           <p>Personalized steps to shrink your carbon footprint</p>
         </div>
       </div>
-      <nav>
+      <nav aria-label="Primary">
+        <a href="#welcome">Welcome</a>
         <a href="#planner">Planner</a>
         <a href="#actions">Action Library</a>
         <a href="#community">Community</a>
@@ -29,6 +37,65 @@
     </header>
 
     <main>
+      <section id="welcome" class="hero fade-in" tabindex="-1">
+        <div class="hero-content">
+          <h2>Start where you are, then build momentum</h2>
+          <p>
+            Climate action feels overwhelming when you are on your own. Climate Companion
+            turns it into a friendly daily ritual by pairing science-backed suggestions with
+            bite-sized commitments you can actually keep.
+          </p>
+          <div class="hero-actions">
+            <a class="primary-btn" href="#planner">Find my first step</a>
+            <button type="button" class="ghost-btn" id="scroll-actions">Browse quick wins</button>
+          </div>
+        </div>
+        <div class="hero-highlights" aria-live="polite">
+          <article>
+            <h3>Daily target</h3>
+            <p>Limit 14 kg CO₂e per person for a 1.5°C-aligned lifestyle.</p>
+          </article>
+          <article>
+            <h3>Community impact</h3>
+            <p>Every action you log adds to the shared progress meter below.</p>
+          </article>
+          <article>
+            <h3>Friendly reminders</h3>
+            <p>We surface at most three focus areas so change feels doable.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="quickstart" class="card fade-in" aria-label="Quick start checklist">
+        <div class="card-header">
+          <h2>Three steps to get unstuck</h2>
+          <p>Use this mini-checklist to map your next week of climate wins.</p>
+        </div>
+        <ol class="checklist">
+          <li>
+            <span class="checklist-number">1</span>
+            <div>
+              <strong>Check your current footprint.</strong>
+              <p>Drag the slider below to match your best estimate.</p>
+            </div>
+          </li>
+          <li>
+            <span class="checklist-number">2</span>
+            <div>
+              <strong>Pick one focus area.</strong>
+              <p>Home, food, transport, or community—choose what feels doable.</p>
+            </div>
+          </li>
+          <li>
+            <span class="checklist-number">3</span>
+            <div>
+              <strong>Add one concrete commitment.</strong>
+              <p>Use the action library or write your own to keep yourself accountable.</p>
+            </div>
+          </li>
+        </ol>
+      </section>
+
       <section id="planner" class="card fade-in">
         <div class="card-header">
           <h2>Impact Planner</h2>
@@ -58,8 +125,8 @@
             </select>
           </div>
           <div class="insight-panel">
-            <div class="insight" id="projection-insight"></div>
-            <div class="insight" id="focus-insight"></div>
+            <div class="insight" id="projection-insight" aria-live="polite"></div>
+            <div class="insight" id="focus-insight" aria-live="polite"></div>
           </div>
         </div>
       </section>
@@ -125,9 +192,20 @@
             <p>Shared commitments</p>
           </div>
           <div class="summary-stat">
+            <span id="completed-count">0</span>
+            <p>Completed actions</p>
+          </div>
+          <div class="summary-stat">
             <span id="impact-total">0</span>
             <p>kg CO₂e pledged</p>
           </div>
+        </div>
+        <div class="progress" role="status" aria-live="polite">
+          <div class="progress-text">
+            <strong id="progress-label">You're just getting started—log your first win!</strong>
+            <p>Hit 30 kg CO₂e of commitments to complete this week's community goal.</p>
+          </div>
+          <progress id="commitment-progress" max="30" value="0">0%</progress>
         </div>
         <ul id="commitment-list" class="commitment-list"></ul>
       </section>
