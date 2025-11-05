@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Climate Companion – Daily Action Planner</title>
+    <link rel="stylesheet" href="src/styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="branding">
+        <div class="logo">🌍</div>
+        <div>
+          <h1>Climate Companion</h1>
+          <p>Personalized steps to shrink your carbon footprint</p>
+        </div>
+      </div>
+      <nav>
+        <a href="#planner">Planner</a>
+        <a href="#actions">Action Library</a>
+        <a href="#community">Community</a>
+      </nav>
+    </header>
+
+    <main>
+      <section id="planner" class="card fade-in">
+        <div class="card-header">
+          <h2>Impact Planner</h2>
+          <p>Map your emissions today and get a plan for tomorrow.</p>
+        </div>
+        <div class="planner-grid">
+          <div class="control-group">
+            <label for="footprint-range">Your estimated daily footprint</label>
+            <input
+              id="footprint-range"
+              type="range"
+              min="5"
+              max="60"
+              value="24"
+              step="1"
+            />
+            <div class="range-value" id="footprint-value">24 kg CO₂e/day</div>
+          </div>
+          <div class="control-group">
+            <label for="focus-select">What do you want to focus on first?</label>
+            <select id="focus-select">
+              <option value="all">A balanced plan</option>
+              <option value="home">Home energy use</option>
+              <option value="food">Food choices</option>
+              <option value="transport">Transportation</option>
+              <option value="community">Community impact</option>
+            </select>
+          </div>
+          <div class="insight-panel">
+            <div class="insight" id="projection-insight"></div>
+            <div class="insight" id="focus-insight"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="actions" class="card fade-in">
+        <div class="card-header">
+          <h2>Action Library</h2>
+          <p>
+            Curated, evidence-based steps you can take. Filter by effort and
+            time commitment to find the right next move.
+          </p>
+        </div>
+        <div class="filters">
+          <label class="filter">
+            Effort level
+            <select id="effort-filter">
+              <option value="all">Any</option>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </label>
+          <label class="filter">
+            Time investment
+            <select id="time-filter">
+              <option value="all">Any</option>
+              <option value="quick">Under an hour</option>
+              <option value="weekend">Weekend project</option>
+              <option value="habit">Build a habit</option>
+            </select>
+          </label>
+          <div class="chips" id="tag-chips"></div>
+        </div>
+        <div id="action-list" class="action-list"></div>
+      </section>
+
+      <section id="community" class="card fade-in">
+        <div class="card-header">
+          <h2>Community Commitments</h2>
+          <p>
+            Climate action thrives in community. Share your commitment and see
+            how others are contributing.
+          </p>
+        </div>
+        <form id="commitment-form" class="commitment-form">
+          <label for="commitment-input" class="sr-only">Share a commitment</label>
+          <textarea
+            id="commitment-input"
+            name="commitment"
+            rows="2"
+            placeholder="Tonight I'm going to..."
+            required
+          ></textarea>
+          <label for="commitment-action" class="sr-only">Link to an action</label>
+          <select id="commitment-action" name="action">
+            <option value="">Link it to a suggested action (optional)</option>
+          </select>
+          <button type="submit" class="primary-btn">Add my commitment</button>
+        </form>
+        <div class="commitment-summary">
+          <div class="summary-stat">
+            <span id="commitment-count">0</span>
+            <p>Shared commitments</p>
+          </div>
+          <div class="summary-stat">
+            <span id="impact-total">0</span>
+            <p>kg CO₂e pledged</p>
+          </div>
+        </div>
+        <ul id="commitment-list" class="commitment-list"></ul>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <p>
+        Built to tackle climate change through informed, collective action.
+        Start small, stay consistent, and invite others along.
+      </p>
+    </footer>
+
+    <script type="module" src="src/app.js"></script>
+  </body>
+</html>
